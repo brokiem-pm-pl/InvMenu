@@ -52,8 +52,8 @@ class SingleBlockMenuMetadata extends MenuMetadata{
 	}
 
 	protected function sendGraphicAt(Vector3 $pos, Player $player, MenuExtradata $metadata) : void{
-	    $network = $player->getNetworkSession();
-		$network->sendDataPacket(UpdateBlockPacket::create($pos->x, $pos->y, $pos->z, RuntimeBlockMapping::getInstance()->toRuntimeId($this->block->getFullId(), $network->getProtocolId())));
+        $network = $player->getNetworkSession();
+        $network->sendDataPacket(UpdateBlockPacket::create($pos->x, $pos->y, $pos->z, RuntimeBlockMapping::getInstance()->toRuntimeId($this->block->getFullId(), RuntimeBlockMapping::getMappingProtocol($network->getProtocolId()))));
 	}
 
 	public function removeGraphic(Player $player, MenuExtradata $extradata) : void{
@@ -62,7 +62,7 @@ class SingleBlockMenuMetadata extends MenuMetadata{
 		$runtime_block_mapping = RuntimeBlockMapping::getInstance();
 		foreach($this->getBlockPositions($extradata) as $position){
 			$block = $world->getBlockAt($position->x, $position->y, $position->z);
-			$network->sendDataPacket(UpdateBlockPacket::create($position->x, $position->y, $position->z, $runtime_block_mapping->toRuntimeId($block->getFullId(), $network->getProtocolId())), true);
+			$network->sendDataPacket(UpdateBlockPacket::create($position->x, $position->y, $position->z, $runtime_block_mapping->toRuntimeId($block->getFullId(), RuntimeBlockMapping::getMappingProtocol($network->getProtocolId()))), true);
 
 			$tile = $world->getTileAt($position->x, $position->y, $position->z);
 			if($tile instanceof Spawnable){
