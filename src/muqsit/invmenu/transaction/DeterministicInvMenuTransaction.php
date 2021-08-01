@@ -1,35 +1,23 @@
 <?php
 
-/*
- *  ___            __  __
- * |_ _|_ ____   _|  \/  | ___ _ __  _   _
- *  | || '_ \ \ / / |\/| |/ _ \ '_ \| | | |
- *  | || | | \ V /| |  | |  __/ | | | |_| |
- * |___|_| |_|\_/ |_|  |_|\___|_| |_|\__,_|
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * @author Muqsit
- * @link http://github.com/Muqsit
- *
-*/
-
 declare(strict_types=1);
 
 namespace muqsit\invmenu\transaction;
 
 use Closure;
 use InvalidStateException;
+use pocketmine\inventory\transaction\action\SlotChangeAction;
+use pocketmine\inventory\transaction\InventoryTransaction;
+use pocketmine\item\Item;
+use pocketmine\player\Player;
 
-final class DeterministicInvMenuTransaction extends InvMenuTransaction{
+final class DeterministicInvMenuTransaction implements InvMenuTransaction{
 
+	private InvMenuTransaction $inner;
 	private InvMenuTransactionResult $result;
 
 	public function __construct(InvMenuTransaction $transaction, InvMenuTransactionResult $result){
-		parent::__construct($transaction->getPlayer(), $transaction->getOut(), $transaction->getIn(), $transaction->getAction(), $transaction->getTransaction());
+		$this->inner = $transaction;
 		$this->result = $result;
 	}
 
@@ -43,5 +31,33 @@ final class DeterministicInvMenuTransaction extends InvMenuTransaction{
 
 	public function then(?Closure $callback) : void{
 		$this->result->then($callback);
+	}
+
+	public function getPlayer() : Player{
+		return $this->inner->getPlayer();
+	}
+
+	public function getOut() : Item{
+		return $this->inner->getOut();
+	}
+
+	public function getIn() : Item{
+		return $this->inner->getIn();
+	}
+
+	public function getItemClicked() : Item{
+		return $this->inner->getItemClicked();
+	}
+
+	public function getItemClickedWith() : Item{
+		return $this->inner->getItemClickedWith();
+	}
+
+	public function getAction() : SlotChangeAction{
+		return $this->inner->getAction();
+	}
+
+	public function getTransaction() : InventoryTransaction{
+		return $this->inner->getTransaction();
 	}
 }

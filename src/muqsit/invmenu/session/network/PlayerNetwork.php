@@ -1,22 +1,5 @@
 <?php
 
-/*
- *  ___            __  __
- * |_ _|_ ____   _|  \/  | ___ _ __  _   _
- *  | || '_ \ \ / / |\/| |/ _ \ '_ \| | | |
- *  | || | | \ V /| |  | |  __/ | | | |_| |
- * |___|_| |_|\_/ |_|  |_|\___|_| |_|\__,_|
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * @author Muqsit
- * @link http://github.com/Muqsit
- *
-*/
-
 declare(strict_types=1);
 
 namespace muqsit\invmenu\session\network;
@@ -142,20 +125,15 @@ final class PlayerNetwork{
 		}
 	}
 
-	public function translateContainerOpen(PlayerSession $session, int $window_id, int $window_type, int $x, int $y, int $z) : bool{
-		$inventory = $this->session->getInvManager()->getWindow($window_id);
+	public function translateContainerOpen(PlayerSession $session, ContainerOpenPacket $packet) : bool{
+		$inventory = $this->session->getInvManager()->getWindow($packet->windowId);
 		if(
 			$inventory !== null &&
-			($current_menu = $session->getCurrentMenu()) !== null &&
-			$current_menu->getInventory() === $inventory &&
-			($pos = $session->getMenuExtradata()->getPosition()) !== null && (
-				$x !== $pos->x ||
-				$y !== $pos->y ||
-				$z !== $pos->z ||
-				$window_type !== $current_menu->getType()->getWindowType()
-			)
+			($current = $session->getCurrent()) !== null &&
+			$current->menu->getInventory() === $inventory &&
+			($translation = $current->graphic->getNetworkTranslator()) !== null
 		){
-			$this->session->sendDataPacket(ContainerOpenPacket::blockInvVec3($window_id, $current_menu->getType()->getWindowType(), $pos));
+			$translation->translate($session, $current, $packet);
 			return true;
 		}
 		return false;

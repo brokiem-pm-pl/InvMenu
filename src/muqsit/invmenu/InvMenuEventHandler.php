@@ -1,22 +1,5 @@
 <?php
 
-/*
- *  ___            __  __
- * |_ _|_ ____   _|  \/  | ___ _ __  _   _
- *  | || '_ \ \ / / |\/| |/ _ \ '_ \| | | |
- *  | || | | \ V /| |  | |  __/ | | | |_| |
- * |___|_| |_|\_/ |_|  |_|\___|_| |_|\__,_|
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * @author Muqsit
- * @link http://github.com/Muqsit
- *
-*/
-
 declare(strict_types=1);
 
 namespace muqsit\invmenu;
@@ -25,30 +8,18 @@ use muqsit\invmenu\session\PlayerManager;
 use pocketmine\event\inventory\InventoryCloseEvent;
 use pocketmine\event\inventory\InventoryTransactionEvent;
 use pocketmine\event\Listener;
-use pocketmine\event\player\PlayerLoginEvent;
-use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\event\server\DataPacketSendEvent;
 use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\network\mcpe\protocol\ContainerOpenPacket;
 use pocketmine\network\mcpe\protocol\NetworkStackLatencyPacket;
 
-class InvMenuEventHandler implements Listener{
-
-	/**
-	 * @param PlayerLoginEvent $event
-	 * @priority MONITOR
-	 */
-	public function onPlayerLogin(PlayerLoginEvent $event) : void{
-		PlayerManager::create($event->getPlayer());
-	}
-
-	/**
-	 * @param PlayerQuitEvent $event
-	 * @priority MONITOR
-	 */
-	public function onPlayerQuit(PlayerQuitEvent $event) : void{
-		PlayerManager::destroy($event->getPlayer());
+final class InvMenuEventHandler implements Listener{
+	
+	private PlayerManager $player_manager;
+	
+	public function __construct(PlayerManager $player_manager){
+		$this->player_manager = $player_manager;
 	}
 
 	/**
@@ -58,7 +29,7 @@ class InvMenuEventHandler implements Listener{
 	public function onDataPacketReceive(DataPacketReceiveEvent $event) : void{
 		$packet = $event->getPacket();
 		if($packet instanceof NetworkStackLatencyPacket){
-			$session = PlayerManager::get($event->getOrigin()->getPlayer());
+			$session = $this->player_manager->getNullable($event->getOrigin()->getPlayer());
 			if($session !== null){
 				$session->getNetwork()->notify($packet->timestamp);
 			}
@@ -77,9 +48,9 @@ class InvMenuEventHandler implements Listener{
 				$targets = $event->getTargets();
 				if(count($targets) === 1){
 					$target = reset($targets);
-					$session = PlayerManager::get($target->getPlayer());
-					if($session !== null && $session->getNetwork()->translateContainerOpen($session, $packet->windowId, $packet->type, $packet->x, $packet->y, $packet->z)){
-						$event->cancel();
+					$session = $this->player_manager->getNullable($target->getPlayer());
+					if($session !== null){
+						$session->getNetwork()->translateContainerOpen($session, $packet);
 					}
 				}
 			}
@@ -92,11 +63,11 @@ class InvMenuEventHandler implements Listener{
 	 */
 	public function onInventoryClose(InventoryCloseEvent $event) : void{
 		$player = $event->getPlayer();
-		$session = PlayerManager::get($player);
+		$session = $this->player_manager->getNullable($player);
 		if($session !== null){
-			$menu = $session->getCurrentMenu();
-			if($menu !== null && $event->getInventory() === $menu->getInventory()){
-				$menu->onClose($player);
+			$current = $session->getCurrent();
+			if($current !== null && $event->getInventory() === $current->menu->getInventory()){
+				$current->menu->onClose($player);
 			}
 		}
 	}
@@ -109,14 +80,14 @@ class InvMenuEventHandler implements Listener{
 		$transaction = $event->getTransaction();
 		$player = $transaction->getSource();
 
-		$player_instance = PlayerManager::getNonNullable($player);
-		$menu = $player_instance->getCurrentMenu();
-		if($menu !== null){
-			$inventory = $menu->getInventory();
+		$player_instance = $this->player_manager->get($player);
+		$current = $player_instance->getCurrent();
+		if($current !== null){
+			$inventory = $current->menu->getInventory();
 			$network_stack_callbacks = [];
 			foreach($transaction->getActions() as $action){
 				if($action instanceof SlotChangeAction && $action->getInventory() === $inventory){
-					$result = $menu->handleInventoryTransaction($player, $action->getSourceItem(), $action->getTargetItem(), $action, $transaction);
+					$result = $current->menu->handleInventoryTransaction($player, $action->getSourceItem(), $action->getTargetItem(), $action, $transaction);
 					$network_stack_callback = $result->getPostTransactionCallback();
 					if($network_stack_callback !== null){
 						$network_stack_callbacks[] = $network_stack_callback;
