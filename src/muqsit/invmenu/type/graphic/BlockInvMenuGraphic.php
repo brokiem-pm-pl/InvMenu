@@ -59,7 +59,7 @@ final class BlockInvMenuGraphic implements PositionedInvMenuGraphic{
 			$runtime_block_mapping->toRuntimeId($block->getFullId(), $mappingProtocol),
 			UpdateBlockPacket::FLAG_NETWORK,
 			UpdateBlockPacket::DATA_LAYER_NORMAL
-		));
+		), true);
 
 		$tile = $world->getTileAt($this->position->x, $this->position->y, $this->position->z);
 		if($tile instanceof Spawnable){
