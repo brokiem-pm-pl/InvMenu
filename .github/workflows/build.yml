@@ -30,7 +30,7 @@ jobs:
           chmod +x PharBuilder/PharBuilder.php
           ./bin/php7/bin/php -dphar.readonly=0 PharBuilder/PharBuilder.php --input . --out PharBuilder --stubs=PharBuilder/stubs
       - name: Upload
-        uses: actions/upload-artifact@v2.2.3
+        uses: actions/upload-artifact@v2.2.4
         with:
           name: InvMenu
           path: PharBuilder/InvMenu.phar
