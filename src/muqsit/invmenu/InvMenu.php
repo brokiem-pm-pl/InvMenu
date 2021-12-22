@@ -110,29 +110,29 @@ class InvMenu implements InvMenuTypeIds{
 		$network = $session->getNetwork();
 		$network->dropPending();
 
-        $callable = function(bool $success) use($player, $session, $name, $callback) : void{
-            if($success){
-                $graphic = $this->type->createGraphic($this, $player);
-                if($graphic !== null){
-                    $graphic->send($player, $name);
-                    $session->setCurrentMenu(new InvMenuInfo($this, $graphic), $callback);
-                }else{
-                    $session->removeCurrentMenu();
-                    if($callback !== null){
-                        $callback(false);
-                    }
-                }
-            }elseif($callback !== null){
-                $callback(false);
-            }
-        };
+		$callable = function(bool $success) use($player, $session, $name, $callback) : void{
+			if($success){
+					$graphic = $this->type->createGraphic($this, $player);
+					if($graphic !== null){
+						$graphic->send($player, $name);
+						$session->setCurrentMenu(new InvMenuInfo($this, $graphic), $callback);
+					}else{
+						$session->removeCurrentMenu();
+						if($callback !== null){
+						    $callback(false);
+						}
+					}
+				}elseif($callback !== null){
+				    $callback(false);
+				}
+            };
 
-        if($player->getCurrentWindow() === null){
-           $callable(true);
-        }else{
-            $player->removeCurrentWindow();
-            $network->waitUntil($network->getGraphicWaitDuration(), $callable);
-        }
+		if($player->getCurrentWindow() === null){
+		   $callable(true);
+		}else{
+		    $player->removeCurrentWindow();
+		    $network->waitUntil($network->getGraphicWaitDuration(), $callable);
+		}
 	}
 
 	public function getInventory() : Inventory{
