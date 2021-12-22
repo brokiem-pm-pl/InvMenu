@@ -119,7 +119,7 @@ class InvMenu implements InvMenuTypeIds{
 				}else{
 					$session->removeCurrentMenu();
 					if($callback !== null){
-					    $callback(false);
+						$callback(false);
 					}
 				}
 			}elseif($callback !== null){
@@ -128,10 +128,10 @@ class InvMenu implements InvMenuTypeIds{
 		};
 
 		if($player->getCurrentWindow() === null){
-		   $callable(true);
+			$callable(true);
 		}else{
-		    $player->removeCurrentWindow();
-		    $network->waitUntil($network->getGraphicWaitDuration(), $callable);
+			$player->removeCurrentWindow();
+			$network->waitUntil($network->getGraphicWaitDuration(), $callable);
 		}
 	}
 
