@@ -106,16 +106,28 @@ class InvMenu implements InvMenuTypeIds{
 	 * @phpstan-param Closure(bool) : void $callback
 	 */
 	final public function send(Player $player, ?string $name = null, ?Closure $callback = null) : void{
+		$player->removeCurrentWindow();
+
 		$session = InvMenuHandler::getPlayerManager()->get($player);
 		$network = $session->getNetwork();
-		$network->dropPending();
-
-		$callable = function(bool $success) use($player, $session, $name, $callback) : void{
+		if($network->getPending() >= 8){
+			// Avoid players from spamming InvMenu::send() and other similar
+			// requests and filling up queued tasks in memory.
+			// It would be better if this check were implemented by plugins,
+			// however I suppose it is more convenient if done within InvMenu...
+			$network->dropPending();
+		}
+		$network->waitUntil(0, function(bool $success) use($player, $session, $name, $callback) : bool{
 			if($success){
 				$graphic = $this->type->createGraphic($this, $player);
 				if($graphic !== null){
 					$graphic->send($player, $name);
-					$session->setCurrentMenu(new InvMenuInfo($this, $graphic), $callback);
+					$session->setCurrentMenu(new InvMenuInfo($this, $graphic), static function(bool $success) use($callback) : bool{
+						if($callback !== null){
+							$callback($success);
+						}
+						return false;
+					});
 				}else{
 					$session->removeCurrentMenu();
 					if($callback !== null){
@@ -125,14 +137,8 @@ class InvMenu implements InvMenuTypeIds{
 			}elseif($callback !== null){
 				$callback(false);
 			}
-		};
-
-		if($player->getCurrentWindow() === null){
-			$callable(true);
-		}else{
-			$player->removeCurrentWindow();
-			$network->waitUntil($network->getGraphicWaitDuration(), $callable);
-		}
+			return false;
+		});
 	}
 
 	public function getInventory() : Inventory{
