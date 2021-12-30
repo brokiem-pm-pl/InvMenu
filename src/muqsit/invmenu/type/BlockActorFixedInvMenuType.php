@@ -36,7 +36,7 @@ final class BlockActorFixedInvMenuType implements FixedInvMenuType{
 	}
 
 	public function createGraphic(InvMenu $menu, Player $player) : ?InvMenuGraphic{
-		$origin = $player->getPosition()->addVector(InvMenuTypeHelper::getBlockOffset($player))->floor();
+		$origin = $player->getPosition()->addVector(InvMenuTypeHelper::getBlockOffset())->floor();
 		if($origin->y < World::Y_MIN || $origin->y >= World::Y_MAX){
 			return null;
 		}
