@@ -138,7 +138,7 @@ class InvMenu implements InvMenuTypeIds{
 		}elseif($session->getCurrent() === null){
 			$network->waitUntil(0, $openGraphic);
 		}else{
-			$network->waitUntil(0, $openGraphic);
+			$network->waitUntil($network->getGraphicWaitDuration(), $openGraphic);
 		}
 	}
 
