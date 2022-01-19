@@ -16,6 +16,7 @@ use pocketmine\block\tile\Chest;
 use pocketmine\inventory\Inventory;
 use pocketmine\player\Player;
 use pocketmine\world\World;
+use function is_nan;
 
 final class DoublePairableBlockActorFixedInvMenuType implements FixedInvMenuType{
 
@@ -38,10 +39,11 @@ final class DoublePairableBlockActorFixedInvMenuType implements FixedInvMenuType
 	}
 
 	public function createGraphic(InvMenu $menu, Player $player) : ?InvMenuGraphic{
-		$origin = $player->getPosition()->addVector(InvMenuTypeHelper::getBlockOffset())->floor();
-		if($origin->y < World::Y_MIN || $origin->y >= World::Y_MAX){
+		$origin = $player->getPosition()->addVector(InvMenuTypeHelper::getBlockOffset());
+		if($origin->y < World::Y_MIN || $origin->y >= World::Y_MAX || is_nan($origin->x) || is_nan($origin->z)){
 			return null;
 		}
+		$origin = $origin->floor();
 
 		$graphics = [];
 		$menu_name = $menu->getName();
