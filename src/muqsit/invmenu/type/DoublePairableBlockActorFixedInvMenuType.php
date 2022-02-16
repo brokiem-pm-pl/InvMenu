@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace muqsit\invmenu\type;
 
+use InvalidArgumentException;
 use muqsit\invmenu\inventory\InvMenuInventory;
 use muqsit\invmenu\InvMenu;
 use muqsit\invmenu\type\graphic\BlockActorInvMenuGraphic;
@@ -40,7 +41,7 @@ final class DoublePairableBlockActorFixedInvMenuType implements FixedInvMenuType
 
 	public function createGraphic(InvMenu $menu, Player $player) : ?InvMenuGraphic{
 		$origin = $player->getPosition()->addVector(InvMenuTypeHelper::getBlockOffset());
-		if($origin->y < World::Y_MIN || $origin->y >= World::Y_MAX || is_nan($origin->x) || is_nan($origin->z)){
+		if($origin->y < World::Y_MIN || $origin->y >= World::Y_MAX){
 			return null;
 		}
 		$origin = $origin->floor();
@@ -51,15 +52,19 @@ final class DoublePairableBlockActorFixedInvMenuType implements FixedInvMenuType
 			[$origin, $origin->east()],
 			[$origin->east(), $origin]
 		] as [$origin_pos, $pair_pos]){
-			$graphics[] = new BlockActorInvMenuGraphic(
-				$this->block,
-				$origin_pos,
-				BlockActorInvMenuGraphic::createTile($this->tile_id, $menu_name)
-					->setInt(Chest::TAG_PAIRX, $pair_pos->x)
-					->setInt(Chest::TAG_PAIRZ, $pair_pos->z),
-				$this->network_translator,
-				$this->animation_duration
-			);
+            try{
+                $graphics[] = new BlockActorInvMenuGraphic(
+                    $this->block,
+                    $origin_pos,
+                    BlockActorInvMenuGraphic::createTile($this->tile_id, $menu_name)
+                        ->setInt(Chest::TAG_PAIRX, $pair_pos->x)
+                        ->setInt(Chest::TAG_PAIRZ, $pair_pos->z),
+                    $this->network_translator,
+                    $this->animation_duration
+                );
+            } catch (InvalidArgumentException){
+                return null;
+            }
 		}
 
 		return count($graphics) > 1 ? new MultiBlockInvMenuGraphic($graphics) : $graphics[0];
