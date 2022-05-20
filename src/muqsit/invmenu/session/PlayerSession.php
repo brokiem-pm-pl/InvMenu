@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace muqsit\invmenu\session;
 
 use Closure;
+use muqsit\invmenu\InvMenuHandler;
 use muqsit\invmenu\session\network\PlayerNetwork;
 use pocketmine\player\Player;
+use pocketmine\scheduler\ClosureTask;
 
 final class PlayerSession{
 
-	protected Player $player;
-	protected PlayerNetwork $network;
-	protected ?InvMenuInfo $current = null;
+	private ?InvMenuInfo $current = null;
 
-	public function __construct(Player $player, PlayerNetwork $network){
-		$this->player = $player;
-		$this->network = $network;
-	}
+	public function __construct(
+		private Player $player,
+		private PlayerNetwork $network
+	){}
 
 	/**
 	 * @internal
@@ -38,9 +38,7 @@ final class PlayerSession{
 	 * @internal use InvMenu::send() instead.
 	 *
 	 * @param InvMenuInfo|null $current
-	 * @param Closure|null $callback
-	 *
-	 * @phpstan-param Closure(bool) : bool $callback
+	 * @param (Closure(bool) : bool)|null $callback
 	 */
 	public function setCurrentMenu(?InvMenuInfo $current, ?Closure $callback = null) : void{
 		$this->current = $current;
@@ -77,7 +75,15 @@ final class PlayerSession{
 	 */
 	public function removeCurrentMenu() : bool{
 		if($this->current !== null){
-			$this->current->graphic->remove($this->player);
+			$server = $this->player->getServer();
+			$uuid = $this->player->getUniqueId();
+			$graphic = $this->current->graphic;
+			InvMenuHandler::getRegistrant()->getScheduler()->scheduleDelayedTask(new ClosureTask(static function() use($server, $uuid, $graphic) : void{
+				$player = $server->getPlayerByUUID($uuid);
+				if($player !== null){
+					$graphic->remove($player);
+				}
+			}), 1);
 			$this->setCurrentMenu(null);
 			return true;
 		}
