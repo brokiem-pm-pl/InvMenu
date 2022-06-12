@@ -16,7 +16,7 @@ use SplQueue;
 final class PlayerNetwork{
 
 	private ?NetworkStackLatencyEntry $current = null;
-	private int $graphic_wait_duration = 150;
+	private int $graphic_wait_duration = 200;
 
 	/** @var SplQueue<NetworkStackLatencyEntry> */
 	private SplQueue $queue;
